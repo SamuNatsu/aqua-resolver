@@ -9,7 +9,11 @@ export const useMainStore = defineStore('main', {
     startTime: '',
     endTime: '',
     frozenStartTime: '',
+    goldNum: 0,
+    silverNum: 0,
+    bronzeNum: 0,
     schoolOptions: [],
+    mode: 'Regular',
     teamMap: new Map(),
     problemList: [],
     solutionList: [],
@@ -25,13 +29,46 @@ export const useMainStore = defineStore('main', {
     rank: null,
     finalStatus: null,
     focusTeam: null,
+    podiumTeam: null,
     // External action
-    fetchMetaData: ()=>{}
+    fetchMetaData: ()=>{},
+    // Internal
+    resolveHandle: null
   }),
+  getters: {
+    totalMedalNum() {
+      return this.goldNum + this.silverNum + this.bronzeNum
+    }
+  },
   actions: {
+    // Dump store
     dump() {
       console.log(this.$state)
     },
+
+    // Wait for resume
+    wait() {
+      if (this.resolveHandle !== null)
+        this.resolveHandle()
+
+      return new Promise((resolve)=>{
+        this.resolveHandle = resolve
+      })
+    },
+
+    // Resume
+    resume() {
+      if (this.resolveHandle !== null) {
+        this.resolveHandle()
+        this.resolveHandle = null
+      }
+    },
+
+    // Check if a rank has medal
+    hasMedal(rank) {
+      return rank !== -1 && rank <= this.totalMedalNum
+    },
+
     fetchMetaFinished() {
       this.settingsMsg = ''
       this.preprocessDisable = false
@@ -60,6 +97,7 @@ export const useMainStore = defineStore('main', {
         this.focusTeam = this.rank[i].teamKey
         await delay(1000)
 
+        let flag = true
         for (let j = 0; j < this.problemList.length; j++) {
           if (this.rank[i].status[j].result === 'frozen') {
             this.rank[i].status[j].result = 'pending'
@@ -76,12 +114,23 @@ export const useMainStore = defineStore('main', {
 
               await delay(500)
               this.reRank()
-              await delay(600)
+              await delay(800)
               i++
               this.focusTeam = null
+              flag = false
               break
             }
           }
+        }
+
+        if (flag && this.hasMedal(this.rank[i].rank)) {
+          this.podiumTeam = {
+            rank: this.rank[i].rank,
+            name: this.rank[i].name,
+            member: this.teamMap.get(this.rank[i].teamKey).member,
+            done: false
+          }
+          await this.wait()
         }
       }
 
@@ -263,7 +312,10 @@ export const useMainStore = defineStore('main', {
   },
   persist: {
     paths: [
-      'contestName', 'startTime', 'endTime', 'frozenStartTime', 'schoolOptions',
+      'contestName',
+      'startTime', 'endTime', 'frozenStartTime',
+      'goldNum', 'silverNum', 'bronzeNum',
+      'schoolOptions', 'mode',
       'teamFilter', 'schoolFilter', 
       'settingsMsg', 'preprocessDisable'
     ]

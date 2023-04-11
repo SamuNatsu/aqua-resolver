@@ -20,26 +20,30 @@ const props = defineProps({
 const main = useMainStore()
 
 // Reactive
-const el = ref(null)
+const element = ref(null)
 const dynClass = ref(['border-l-0'])
 
 // Computed
-const gridColStyle = computed(()=>{
-  return {
-    gridTemplateColumns: `repeat(${props.status.length}, 1fr)`
-  }
-})
-const rankText = computed(()=>{
-  return props.rank === -1 ? '*' : `#${props.rank}`
-})
-const penaltyText = computed(()=>{
-  return Math.round(props.penalty / 60000)
+const gridColStyle = computed(()=>({
+  gridTemplateColumns: `repeat(${props.status.length}, 1fr)`
+}))
+const medalImgSrc = computed(()=>{
+  if (props.rank === 1)
+    return '/img/champion.svg'
+  else if (props.rank <= main.goldNum)
+    return '/img/gold.svg'
+  else if (props.rank <= main.goldNum + main.silverNum)
+    return '/img/silver.svg'
+  else if (props.rank <= main.goldNum + main.silverNum + main.bronzeNum)
+    return '/img/bronze.svg'
+  else 
+    return ''
 })
 
 // Actions
-const scrollToElement = (element, callback)=>{
+const scrollToElement = (callback)=>{
   const startY = scrollY
-  const diff = element.getBoundingClientRect().top - innerHeight + element.getBoundingClientRect().height
+  const diff = element.value.getBoundingClientRect().top - innerHeight + element.value.getBoundingClientRect().height
   const duration = 500
   const easeFn = (x)=>x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
 
@@ -49,8 +53,7 @@ const scrollToElement = (element, callback)=>{
       start = tms
 
     const elapse = tms - start
-    const percent = Math.min(elapse / duration, 1)
-    const easePct = easeFn(percent, 0, 1, 1)
+    const easePct = easeFn(Math.min(elapse / duration, 1))
 
     scrollTo(0, startY + diff * easePct)
     if (elapse < duration)
@@ -67,30 +70,50 @@ watch(
   ()=>main.focusTeam,
   ()=>{
     if (main.focusTeam === props.teamKey) {
-      dynClass.value = ['border-l-4', 'border-green-400']
-      scrollToElement(el.value)
-    } else {
+      dynClass.value = ['border-l-4']
+      scrollToElement()
+    } else
       dynClass.value = ['border-l-0']
-    }
   }
 )
 </script>
 
 <template>
-  <div class="flex items-center py-4 border-solid transition-all" :class="dynClass" ref="el">
-    <div class="font-bold text-center text-white w-24">{{ rankText }}</div>
+  <div 
+    class="border-green-400 border-solid flex items-center py-4 relative transition-all"
+    :class="dynClass"
+    ref="element"
+  >
+    <!-- Medal -->
+    <img
+      v-if="rank !== -1 && rank <= main.goldNum + main.silverNum + main.bronzeNum"
+      class="absolute h-8 left-0 top-0 w-8"
+      draggable="false"
+      :src="medalImgSrc"
+    />
+
+    <!-- Rank # -->
+    <div class="font-bold text-center text-white w-24">
+      {{ rank === -1 ? '*' : `#${rank}` }}
+    </div>
 
     <div class="flex flex-col flex-grow">
+      <!-- Team info -->
       <div class="flex justify-between text-white">
+        <!-- Name & school -->
         <div class="flex w-1/2">
           <div class="font-bold w-1/2">{{ name }}</div>
           <div>{{ school }}</div>
         </div>
+
+        <!-- Solved & penalty -->
         <div class="flex flex-grow justify-end text-center">
           <div class="w-1/4">{{ solved }}</div>
-          <div class="w-1/4">{{ penaltyText }}</div>
+          <div class="w-1/4">{{ Math.round(penalty / 60000) }}</div>
         </div>
       </div>
+
+      <!-- Status list -->
       <div class="flex-grow grid" :style="gridColStyle">
         <TeamStatus
           v-for="i in status"

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useMainStore } from '../stores/main'
 
 // Components
+import TeamPodium from '../components/TeamPodium.vue'
 import TeamRow from '../components/TeamRow.vue'
 
 // Router
@@ -47,8 +48,6 @@ const onKeyUp = (e)=>{
         scrollToButtom(resolve)
       }).then(main.startResolve)
       break
-    case 'KeyF':
-      main.focusTeam = prompt('Focus on:')
   }
 }
 
@@ -69,6 +68,9 @@ onUnmounted(()=>{
 </script>
 
 <template>
+  <!-- Podium -->
+  <TeamPodium/>
+
   <TransitionGroup name="list">
     <TeamRow
       v-for="(i, idx) in main.rank"
@@ -80,13 +82,13 @@ onUnmounted(()=>{
       :solved="i.solved"
       :penalty="i.penalty"
       :status="i.status"
-      :class="{'bg-blue-900': idx % 2 === 0}"
+      :class="{'bg-blue-900': idx % 2 === 0, 'bg-blue-950': idx % 2 === 1}"
     />
   </TransitionGroup>
 </template>
 
-<style scoped>
+<style lang="postcss" scoped>
 .list-move {
-  transition: all .5s ease;
+  @apply duration-700 transition-all z-50
 }
 </style>

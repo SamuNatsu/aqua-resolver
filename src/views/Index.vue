@@ -15,6 +15,7 @@ const main = useMainStore()
 </script>
 
 <template>
+  <!-- Wrapper -->
   <div class="flex flex-col items-center mb-20 text-white">
     <!-- Logo & title -->
     <div class="flex items-center mt-20 relative">
@@ -27,18 +28,19 @@ const main = useMainStore()
     <div class="mt-8" style="width:33vw">
       <h1 class="font-bold text-3xl text-center">Interface</h1>
 
-      <!-- Your interface component -->
+      <!-- Your interface component below -->
       <Soj/>
+      <!-- Your interface component above -->
     </div>
 
-    <!-- Buttons -->
+    <!-- Fetch meta data button -->
     <div class="mt-8">
       <button @click="main.fetchMetaData">Fetch Meta Data</button>
     </div>
- 
-    <!-- Message -->
+
+    <!-- Interface message -->
     <div v-html="main.interfaceMsg" class="font-bold mt-4 text-center text-lg"/>
-  
+
     <!-- Settings -->
     <div class="mt-8" style="width:33vw">
       <h1 class="font-bold text-3xl text-center">Settings</h1>
@@ -62,6 +64,18 @@ const main = useMainStore()
       <!-- Frozen start time -->
       <h2 class="mt-4">Frozen start time</h2>
       <input v-model="main.frozenStartTime" type="datetime-local"/>
+
+      <!-- Gold medal count -->
+      <h2 class="mt-4">Gold medal count</h2>
+      <input v-model="main.goldNum" type="number"/>
+
+      <!-- Silver medal count -->
+      <h2 class="mt-4">Silver medal count</h2>
+      <input v-model="main.silverNum" type="number"/>
+
+      <!-- Bronze medal count -->
+      <h2 class="mt-4">Bronze medal count</h2>
+      <input v-model="main.bronzeNum" type="number"/>
 
       <!-- Team filter -->
       <h2 class="mt-4">Team Filter</h2>
@@ -90,6 +104,18 @@ const main = useMainStore()
         :searchable="false"
         :show-labels="true"
         :taggable="true"
+        class="w-full"
+        open-direction="bottom"
+      />
+
+      <!-- Mode -->
+      <h2 class="mt-4">Mode</h2>
+      <MultiSelect
+        v-model="main.mode"
+        :close-on-select="true"
+        :options="['Regular', 'Global']"
+        :searchable="false"
+        :show-labels="true"
         class="w-full"
         open-direction="bottom"
       />

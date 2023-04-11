@@ -32,8 +32,7 @@ const tagText = computed(()=>{
       return '\u2003'
     case 'first_blood':
     case 'accepted':
-      let tmp = Math.round(props.penalty / 60000)
-      return `${props.tries}/${tmp}`
+      return `${props.tries}/${Math.round(props.penalty / 60000)}`
     case 'wrong_answer':
       return props.tries
     case 'frozen':
