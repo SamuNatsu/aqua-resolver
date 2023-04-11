@@ -32,9 +32,9 @@ jobs:
     - name: Build distribution
       run: pnpm run build
     - name: Create artifact
-      run: tar --dereference --hard-dereference --directory dist/ -zcvf aqua-rank.tar.gz .
+      run: tar --dereference --hard-dereference --directory dist/ -zcvf aqua-resolver.tar.gz .
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: aqua-rank-node-${{ matrix.node-version }}
-        path: aqua-rank.tar.gz
+        name: aqua-resolver-node-${{ matrix.node-version }}
+        path: aqua-resolver.tar.gz
