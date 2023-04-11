@@ -1,0 +1,21 @@
+/* Tailwind css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global style */
+body {
+  @apply bg-blue-950
+}
+
+.multiselect__content-wrapper::-webkit-scrollbar {
+  @apply w-1
+}
+.multiselect__content-wrapper::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-sm
+}
+
+/* Global style */
+.hide-scrollbar::-webkit-scrollbar {
+  @apply hidden
+}
