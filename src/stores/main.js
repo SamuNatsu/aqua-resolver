@@ -303,7 +303,7 @@ export const useMainStore = defineStore('main', {
       let lstRnkIdx = -1, lstRnk = 1, stp = 1
       ret.forEach((v, idx, ref)=>{
         const team = this.teamMap.get(v.teamKey)
-        if (team.kind === 'Unofficial') {
+        if (team.kind === 'Unofficial' && this.mode === 'Regular') {
           ref[idx].rank = -1
           return
         }
@@ -340,7 +340,7 @@ export const useMainStore = defineStore('main', {
       let lstRnkIdx = -1, lstRnk = 1, stp = 1
       ret.forEach((v, idx, ref)=>{
         const team = this.teamMap.get(v.teamKey)
-        if (team.kind === 'Unofficial') {
+        if (team.kind === 'Unofficial' && this.mode === 'Regular') {
           ref[idx].rank = -1
           return
         }
