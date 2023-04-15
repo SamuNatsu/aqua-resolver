@@ -184,7 +184,7 @@ export const useSojStore = defineStore('soj', {
           return {
             teamKey: `${v[3]}@${v[1]}`,
             problemId: v[2],
-            result: v[4] === 4 ? 'AC' : 'WA',
+            result: v[4] === 4 ? 'AC' : (v[4] === 11 ? 'CE' : 'WA'),
             inDate: v[5]
           }
         }))

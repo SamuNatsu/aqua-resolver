@@ -1,5 +1,6 @@
 <script setup>
 import { version } from '../../package.json'
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMainStore } from '../stores/main'
 
@@ -12,6 +13,12 @@ const router = useRouter()
 
 // Stores
 const main = useMainStore()
+
+// Life cycle
+onMounted(()=>{
+  main.stop = true
+  main.resume()
+})
 </script>
 
 <template>
@@ -112,10 +119,11 @@ const main = useMainStore()
       <h2 class="mt-4">Mode</h2>
       <MultiSelect
         v-model="main.mode"
+        :allow-empty="false"
         :close-on-select="true"
         :options="['Regular', 'Global']"
         :searchable="false"
-        :show-labels="true"
+        :show-labels="false"
         class="w-full"
         open-direction="bottom"
       />

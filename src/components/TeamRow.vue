@@ -44,7 +44,7 @@ const medalImgSrc = computed(()=>{
 const scrollToElement = (callback)=>{
   const startY = scrollY
   const diff = element.value.getBoundingClientRect().top - innerHeight + element.value.getBoundingClientRect().height
-  const duration = 500
+  const duration = 500 * main.speed
   const easeFn = (x)=>x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2
 
   let start = null

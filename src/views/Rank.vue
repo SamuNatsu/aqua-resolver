@@ -43,12 +43,24 @@ const onKeyUp = (e)=>{
     case 'Escape':
       router.push('/')
       break
+    case 'Minus':
+      main.addSpeed(0.05)
+      break
+    case 'Equal':
+      main.addSpeed(-0.05)
+      break
     case 'Enter':
+      if (main.stop === false)
+        return
+
       new Promise((resolve)=>{
         scrollToButtom(resolve)
       }).then(main.startResolve)
       break
   }
+}
+const setTransitionDuration = (el)=>{
+  el.style.transitionDuration = (700 * main.speed) + 'ms'
 }
 
 // Life cycle
@@ -68,27 +80,36 @@ onUnmounted(()=>{
 </script>
 
 <template>
-  <!-- Podium -->
-  <TeamPodium/>
+  <div class="cursor-none" @click="main.resume">
+    <!-- Podium -->
+    <TeamPodium/>
 
-  <TransitionGroup name="list">
-    <TeamRow
-      v-for="(i, idx) in main.rank"
-      :key="i.teamKey"
-      :team-key="i.teamKey"
-      :rank="i.rank"
-      :name="i.name"
-      :school="i.school"
-      :solved="i.solved"
-      :penalty="i.penalty"
-      :status="i.status"
-      :class="{'bg-blue-900': idx % 2 === 0, 'bg-blue-950': idx % 2 === 1}"
-    />
-  </TransitionGroup>
+    <!-- Header -->
+    <header class="flex flex-col items-center py-12 text-white">
+      <h1 class="font-bold mb-4 text-3xl">{{ main.contestName }}</h1>
+      <p>{{ main.startTime }} ~ {{ main.endTime }}</p>
+    </header>
+
+    <!-- Rank -->
+    <TransitionGroup name="list" @before-enter="setTransitionDuration">
+      <TeamRow
+        v-for="(i, idx) in main.rank"
+        :key="i.teamKey"
+        :team-key="i.teamKey"
+        :rank="i.rank"
+        :name="i.name"
+        :school="i.school"
+        :solved="i.solved"
+        :penalty="i.penalty"
+        :status="i.status"
+        :class="{'bg-blue-900': idx % 2 === 0, 'bg-blue-950': idx % 2 === 1}"
+      />
+    </TransitionGroup>
+  </div>
 </template>
 
 <style lang="postcss" scoped>
 .list-move {
-  @apply duration-700 transition-all z-50
+  @apply transition-all z-50
 }
 </style>

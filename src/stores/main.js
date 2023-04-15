@@ -26,10 +26,12 @@ export const useMainStore = defineStore('main', {
     preprocessDisable: true,
     resolveDisable: true,
     // Resolve
+    stop: true,
     rank: null,
     finalStatus: null,
     focusTeam: null,
     podiumTeam: null,
+    speed: 1.0,
     // External action
     fetchMetaData: ()=>{},
     // Internal
@@ -64,15 +66,23 @@ export const useMainStore = defineStore('main', {
       }
     },
 
+    // Add speed
+    addSpeed(x) {
+      this.speed = Math.max(0.05, Math.min(this.speed + x, 3))
+    },
+
     // Check if a rank has medal
     hasMedal(rank) {
       return rank !== -1 && rank <= this.totalMedalNum
     },
 
+    // Call back for fetch meta finished
     fetchMetaFinished() {
       this.settingsMsg = ''
       this.preprocessDisable = false
     },
+
+    // Preprocess rank
     preprocess() {
       this.settingsMsg = '<span>Proprocessing...</span>'
       try {
@@ -88,33 +98,54 @@ export const useMainStore = defineStore('main', {
         this.settingsMsg = `<span class="text-red-500">${err.message}</span>`
       }
     },
+
+    // Resolve
     async startResolve() {
+      // Delay function
       const delay = (t)=>new Promise((resolve)=>{
         setInterval(resolve, t)
       })
 
-      for (let i = this.rank.length - 1; i >= 0; i--) {
+      // For each team from low to high
+      this.stop = false
+      for (let i = this.rank.length - 1; this.stop === false && i >= 0; i--) {
+        // Focus on team
         this.focusTeam = this.rank[i].teamKey
-        await delay(1000)
+        await delay(1000 * this.speed)
 
+        // Final status flag(reversed)
         let flag = true
-        for (let j = 0; j < this.problemList.length; j++) {
-          if (this.rank[i].status[j].result === 'frozen') {
-            this.rank[i].status[j].result = 'pending'
-            await delay(1000)
 
+        // For each problem
+        for (let j = 0; this.stop === false && j < this.problemList.length; j++) {
+          // If status is frozen, we need to reveal it
+          if (this.rank[i].status[j].result === 'frozen') {
+            // Focus on problem
+            this.rank[i].status[j].result = 'pending'
+            if (this.hasMedal(this.rank[i].rank))
+              await this.wait()
+            else
+              await delay(1000 * this.speed)
+
+            // Patch status
             const nStatus = this.finalStatus.get(this.rank[i].teamKey)[j]
             this.rank[i].status[j] = nStatus
+
+            // If rank up
             if (['first_blood', 'accepted'].includes(nStatus.result)) {
+              // Patch statistic
               this.rank[i].solved++
               this.rank[i].penalty = 0
               this.rank[i].status
                 .filter((v)=>['first_blood', 'accepted'].includes(v.result))
                 .forEach((v)=>this.rank[i].penalty += v.penalty)
 
-              await delay(500)
+              // Rerank
+              await delay(500 * this.speed)
               this.reRank()
-              await delay(800)
+              await delay(800 * this.speed)
+
+              // Restore loop states
               i++
               this.focusTeam = null
               flag = false
@@ -123,7 +154,9 @@ export const useMainStore = defineStore('main', {
           }
         }
 
+        // If status settled & team has medal
         if (flag && this.hasMedal(this.rank[i].rank)) {
+          // Show podium & wait for mouse click
           this.podiumTeam = {
             rank: this.rank[i].rank,
             name: this.rank[i].name,
@@ -134,20 +167,28 @@ export const useMainStore = defineStore('main', {
         }
       }
 
+      // Clean up
       this.focusTeam = null
     },
+
+    // Generate status from solutions
     genStatus() {
       const ret1 = new Map(), ret2 = new Map()
       const fb1 = [], fb2 = []
 
+      // For each solution
       this.solutionList
+        // Apply filter
         .filter((v)=>{
           const team = this.teamMap.get(v.teamKey)
           return this.teamFilter.includes(team.kind) && this.schoolFilter.includes(team.school)
         })
+        // For each
         .forEach((v)=>{
+          // Problem index
           const pidx = this.problemList.indexOf(v.problemId)
 
+          // Check team existed in maps
           if (!ret1.has(v.teamKey)) {
             let tmp = []
             for (let i = 0; i < this.problemList.length; ++i)
@@ -172,6 +213,7 @@ export const useMainStore = defineStore('main', {
           }
           const cur1 = ret1.get(v.teamKey)[pidx], cur2 = ret2.get(v.teamKey)[pidx]
 
+          // For accepted
           if (v.result === 'AC') {
             if (!['first_blood', 'accepted'].includes(cur1.result)) {
               if (fb1.includes(v.problemId))
@@ -199,18 +241,21 @@ export const useMainStore = defineStore('main', {
               cur2.result = 'frozen'
               cur2.frozenTries++
             }
+          // For wrong answer & compile error
           } else {
             if (!['first_blood', 'accepted'].includes(cur1.result)) {
               cur1.result = 'wrong_answer'
               cur1.tries++
-              cur1.penalty += 1200000
+              if (v.result === 'WA')
+                cur1.penalty += 1200000
             }
 
             if (new Date(v.inDate).getTime() < new Date(this.frozenStartTime).getTime()) {
               if (!['first_blood', 'accepted'].includes(cur2.result)) {
                 cur2.result = 'wrong_answer'
                 cur2.tries++
-                cur2.penalty += 1200000
+                if (v.result === 'WA')
+                  cur2.penalty += 1200000
               }
             } else if (!['first_blood', 'accepted'].includes(cur2.result)) {
               cur2.result = 'frozen'
@@ -221,6 +266,8 @@ export const useMainStore = defineStore('main', {
 
       return { final: ret1, frozen: ret2 }
     },
+
+    // Generate rank from status
     genRank(status) {
       const ret = []
       status.forEach((v, k)=>{
@@ -274,6 +321,8 @@ export const useMainStore = defineStore('main', {
 
       return ret
     },
+
+    // Rerank
     reRank() {
       const ret = _.cloneDeep(this.rank)
 
@@ -316,8 +365,7 @@ export const useMainStore = defineStore('main', {
       'startTime', 'endTime', 'frozenStartTime',
       'goldNum', 'silverNum', 'bronzeNum',
       'schoolOptions', 'mode',
-      'teamFilter', 'schoolFilter', 
-      'settingsMsg', 'preprocessDisable'
+      'teamFilter', 'schoolFilter'
     ]
   }
 })
